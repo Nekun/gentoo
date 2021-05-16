@@ -7,7 +7,7 @@ if [[ ${PV} = *9999* ]]; then
 	GIT_ECLASS="git-r3"
 fi
 
-inherit ${GIT_ECLASS} meson
+inherit ${GIT_ECLASS} meson flag-o-matic
 
 DESCRIPTION="Intel GPU userland tools"
 
@@ -74,6 +74,14 @@ DEPEND="${RDEPEND}
 "
 
 PATCHES=( "${FILESDIR}/${PV}-python-3.9.patch" )
+
+pkg_setup() {
+	# Force lazy binding on hardened profiles to avoid SEGVs, see #788625
+	filter-ldflags -Wl,-z,now
+	if ! is-ldflag -Wl,-z,lazy; then
+		append-ldflags -Wl,-z,lazy
+	fi
+}
 
 src_prepare() {
 	sed -e "s/find_program('rst2man-3'/find_program('rst2man.py', 'rst2man-3'/" -i man/meson.build
